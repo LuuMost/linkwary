@@ -33,4 +33,4 @@ Allow: /
 User-agent: Claude-User
 Allow: /
 
-Sitemap: https://YOUR-DOMAIN-HERE/sitemap.xml
+Sitemap: https://luumost.github.io/linkwary/sitemap.xml
