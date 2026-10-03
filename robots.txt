@@ -1,0 +1,36 @@
+# LinkWary — allow every crawler, and name the AI readers explicitly.
+User-agent: *
+Allow: /
+
+# ChatGPT / OpenAI search reader
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+# Perplexity reader
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google's AI features
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+# Claude
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+Sitemap: https://YOUR-DOMAIN-HERE/sitemap.xml

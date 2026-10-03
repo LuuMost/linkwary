@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is This Link Safe? Free URL Safety Checker — LinkWary</title>
+<meta name="description" content="Paste any link and see if it is safe. LinkWary shows you the real domain hidden in the URL, how old the domain is, whether it is about to expire, and every phishing warning sign — free, no signup, nothing is uploaded.">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<link rel="canonical" href="https://YOUR-DOMAIN-HERE/">
+
+<!-- Open Graph: how the link looks when shared on WhatsApp, X, Facebook, TikTok -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Is This Link Safe? Free URL Safety Checker">
+<meta property="og:description" content="Paste a suspicious link. See the real domain, the domain's age, and every phishing red flag. Free, no signup.">
+<meta property="og:url" content="https://YOUR-DOMAIN-HERE/">
+<meta property="og:site_name" content="LinkWary">
+<meta name="twitter:card" content="summary">
+
+<!-- Plain-text facts for AI assistants (ChatGPT, Perplexity, Gemini) to read and quote -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "LinkWary — Is This Link Safe?",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Any web browser",
+  "url": "https://YOUR-DOMAIN-HERE/",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "A free one-page link safety checker. You paste a URL and it breaks the address into its parts, highlights the real domain, looks up when that domain was registered and when it expires using public RDAP registry data, and checks for common phishing signs such as lookalike brand names, fake characters, IP addresses, unusual ports, hidden usernames and URL shorteners. No account, no download, and the link you check is never uploaded to a server.",
+  "featureList": [
+    "URL anatomy breakdown that highlights the real domain",
+    "Domain age lookup from public registry (RDAP) data",
+    "Domain expiry and short-lifetime registration warning",
+    "Typosquatting check against 40 well-known brand names",
+    "Lookalike character and punycode detection",
+    "IP address, unusual port, hidden username and shortener detection",
+    "Clear verdict: Looks safe, Be careful, or Danger signs"
+  ],
+  "isAccessibleForFree": true
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I know if a link is safe before clicking it?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Look at the real domain, which is the part of the address just before the first single slash. Ignore everything to the left of it, because scammers hide fake brand names in subdomains like paypal.secure-login.example.com — the real site there is example.com, not PayPal. Then check how old the domain is. Domains registered in the last 30 days are used in most phishing campaigns, because scammers buy them cheap, use them for a few weeks, and abandon them. Finally check the expiry date: a domain registered recently that also expires within a year was probably bought for one short campaign." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is domain age and why does it matter for phishing?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Domain age is how long ago a web address was first registered. The registration date is public record in the domain registry, published through a free protocol called RDAP. It matters because legitimate banks, shops and services usually own domains that are many years old, while phishing and scam sites overwhelmingly use domains registered days or weeks earlier. A brand-new domain pretending to be a well-known company is one of the strongest warning signs available without any special software." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this tool upload the links I check?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. The URL breakdown and all the warning-sign checks run inside your own browser, so the link you paste is never sent to this website's server. The only external request is a lookup to the public RDAP registry service to fetch the domain's registration date, expiry date and registrar, and that request contains only the domain name itself — not the full link, not any path, not any query string." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can a link look safe here and still be a scam?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. This tool checks structural warning signs and public registration data. It cannot scan the destination website for malware, it cannot see whether a page is a fake login form, and it cannot check a real-time blacklist of known malicious addresses. A domain that is ten years old can still be hacked and used to serve bad content. Treat a clean result as 'no obvious structural red flags', not as a guarantee, and keep antivirus software and browser warnings enabled." }
+    },
+    {
+      "@type": "Question",
+      "name": "Are URL shorteners like bit.ly dangerous?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A shortener is not dangerous by itself, but it hides the real destination, which is exactly what a phishing attacker wants. If you receive an unsolicited shortened link, expand it first. Most shorteners will show you the target if you add a plus sign or a tilde to the end of the address, or you can paste the shortened link into this tool and follow the expanded destination through a second check." }
+    }
+  ]
+}
+</script>
+
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121821; --panel2:#0e141c; --line:#212c3a;
+    --text:#e8eef5; --dim:#93a4b8; --dimmer:#657789;
+    --safe:#3ecf8e; --warn:#f5b544; --bad:#ff5d5d; --accent:#5aa9ff;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 18px}
+  header{padding:34px 0 6px;text-align:center}
+  .brand{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--dimmer);text-transform:uppercase}
+  h1{font-size:clamp(27px,6.4vw,42px);line-height:1.14;margin:12px 0 0;letter-spacing:-.02em}
+  .lede{color:var(--dim);font-size:clamp(15px,3.8vw,17px);margin:12px auto 0;max-width:56ch}
+
+  /* one-sentence plain-text description, required by the method */
+  .one-sentence{
+    margin:22px auto 0;max-width:62ch;font-size:15px;color:var(--dim);
+    border-left:2px solid var(--line);padding-left:14px;text-align:left
+  }
+  .one-sentence b{color:var(--text);font-weight:600}
+
+  /* ad slot placeholders — replaced with real ad code in step 7 */
+  .ad-slot{
+    margin:22px auto;max-width:728px;min-height:90px;
+    border:1px dashed var(--line);border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--dimmer);font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    background:var(--panel2);text-transform:uppercase
+  }
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:20px}
+  form{display:flex;gap:10px;flex-wrap:wrap}
+  label.field{flex:1 1 320px;display:block;text-align:left}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  input[type=url],input[type=text]{
+    width:100%;padding:15px 16px;font-size:16px;font-family:var(--mono);
+    background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:11px;outline:none
+  }
+  input::placeholder{color:var(--dimmer);font-family:inherit}
+  input:focus{border-color:var(--accent)}
+  button{
+    padding:15px 26px;font-size:16px;font-weight:650;cursor:pointer;
+    background:var(--accent);color:#04121f;border:0;border-radius:11px;letter-spacing:-.01em;
+    flex:0 0 auto
+  }
+  button:active{transform:translateY(1px)}
+  button[disabled]{opacity:.55;cursor:default}
+  .examples{margin-top:14px;font-size:13px;color:var(--dimmer);text-align:left}
+  .examples button{
+    background:none;border:1px solid var(--line);color:var(--dim);
+    font-family:var(--mono);font-size:12px;font-weight:400;padding:6px 10px;border-radius:8px;margin:4px 6px 0 0
+  }
+  .note{margin-top:12px;font-size:12.5px;color:var(--dimmer);text-align:left}
+
+  /* verdict */
+  #result{margin-top:22px;display:none}
+  #result.on{display:block}
+  .verdict{border-radius:14px;padding:18px 20px;border:1px solid var(--line);background:var(--panel2)}
+  .verdict .k{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dimmer)}
+  .verdict .v{font-size:clamp(22px,5.4vw,30px);font-weight:750;letter-spacing:-.02em;margin-top:4px}
+  .verdict.safe{border-color:rgba(62,207,142,.4)} .verdict.safe .v{color:var(--safe)}
+  .verdict.warn{border-color:rgba(245,181,68,.4)} .verdict.warn .v{color:var(--warn)}
+  .verdict.bad{border-color:rgba(255,93,93,.45)} .verdict.bad .v{color:var(--bad)}
+  .verdict p{margin:8px 0 0;color:var(--dim);font-size:15px}
+
+  h2{font-size:15px;margin:26px 0 10px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+
+  /* url anatomy */
+  .anatomy{
+    font-family:var(--mono);font-size:clamp(12.5px,3.4vw,15px);word-break:break-all;
+    background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:14px;line-height:2
+  }
+  .anatomy .p{color:var(--dimmer)}
+  .anatomy .real{
+    background:rgba(90,169,255,.16);color:#bcdcff;border-radius:5px;padding:2px 5px;
+    border-bottom:2px solid var(--accent);font-weight:700
+  }
+  .anatomy .sus{background:rgba(255,93,93,.16);color:#ffc9c9;border-radius:5px;padding:2px 5px}
+  .caption{font-size:13px;color:var(--dim);margin-top:9px}
+  .caption b{color:var(--accent)}
+
+  /* checks list */
+  ul.checks{list-style:none;margin:0;padding:0}
+  ul.checks li{
+    display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line);font-size:15px
+  }
+  ul.checks li:first-child{border-top:0}
+  .dot{flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:8px;background:var(--dimmer)}
+  .dot.g{background:var(--safe)} .dot.y{background:var(--warn)} .dot.r{background:var(--bad)}
+  .ct{flex:1}
+  .ct .t{font-weight:600}
+  .ct .d{color:var(--dim);font-size:14px;margin-top:2px}
+  .ct .d code{font-family:var(--mono);font-size:12.5px;color:#bcdcff;background:var(--panel2);padding:1px 5px;border-radius:4px}
+
+  .agebar{height:9px;border-radius:6px;background:var(--panel);overflow:hidden;margin-top:10px;border:1px solid var(--line)}
+  .agebar i{display:block;height:100%;background:var(--safe)}
+  .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px 13px}
+  .stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer)}
+  .stat .v{font-size:16px;font-weight:650;margin-top:3px;word-break:break-word}
+
+  .loading{color:var(--dim);font-size:14px;font-family:var(--mono);padding:14px 0}
+
+  /* real text content for Google + AI assistants */
+  .content{margin:38px 0 0;border-top:1px solid var(--line);padding-top:8px}
+  .content h2{font-family:inherit;text-transform:none;letter-spacing:-.01em;font-size:22px;color:var(--text);margin-top:34px}
+  .content h3{font-size:17px;margin:24px 0 6px}
+  .content p{color:var(--dim);font-size:15.5px;margin:10px 0}
+  .content ul,.content ol{color:var(--dim);font-size:15.5px;padding-left:22px}
+  .content li{margin:7px 0}
+  .content b,.content strong{color:var(--text)}
+  .content code{font-family:var(--mono);font-size:13.5px;color:#bcdcff;background:var(--panel2);padding:1px 5px;border-radius:4px}
+  .content table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+  .content th,.content td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);color:var(--dim);vertical-align:top}
+  .content th{color:var(--text);font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+  .disclaimer{
+    margin:30px 0 0;padding:16px 18px;border:1px solid rgba(245,181,68,.35);
+    background:rgba(245,181,68,.06);border-radius:12px;font-size:14.5px;color:var(--dim)
+  }
+  .disclaimer b{color:var(--warn)}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 44px;color:var(--dimmer);font-size:13px;text-align:center}
+  footer a{color:var(--dim)}
+  @media (max-width:520px){ button{flex:1 1 100%} .card{padding:16px} }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="brand">LinkWary</div>
+  <h1>Is this link safe?</h1>
+  <p class="lede">Paste any link. See the real website hiding inside it, how old that website is, and every phishing warning sign — before you click.</p>
+  <p class="one-sentence">This is a <b>free one-page link safety checker</b> for <b>anyone who received a suspicious link by email, SMS or WhatsApp</b> that <b>breaks the address into its parts, shows the real domain, looks up how long ago that domain was registered and when it expires, and lists the phishing red flags it finds.</b></p>
+</header>
+
+<!-- AD SLOT 1 — paste your Adsterra or Monetag code between these comments (step 7) -->
+<div class="wrap"><div class="ad-slot">Ad slot 1 — above the button</div></div>
+
+<main class="wrap">
+  <div class="card">
+    <form id="f" autocomplete="off" novalidate>
+      <label class="field">
+        <span class="sr">Paste the link you want to check</span>
+        <input id="u" type="text" inputmode="url" placeholder="Paste a link, e.g. https://login.paypa1-secure.com/verify" aria-label="Link to check">
+      </label>
+      <button id="go" type="submit">Check link</button>
+    </form>
+    <div class="examples">
+      Try one:
+      <button type="button" data-ex="https://www.google.com/search?q=is+this+link+safe">google.com (safe)</button>
+      <button type="button" data-ex="http://netflix-billing-update.secure-verify.co/login">a fake Netflix link</button>
+      <button type="button" data-ex="https://185.220.101.44/invoice">an IP address link</button>
+      <div class="note">Nothing you paste is uploaded. The breakdown and the checks run inside your own browser. Only the domain name is looked up in the public registry to get its registration date.</div>
+    </div>
+  </div>
+
+  <section id="result" aria-live="polite">
+    <div id="verdictBox" class="verdict">
+      <div class="k">Verdict</div>
+      <div class="v" id="verdictText">—</div>
+      <p id="verdictWhy"></p>
+    </div>
+
+    <h2>1 · The address, taken apart</h2>
+    <div class="anatomy" id="anatomy"></div>
+    <p class="caption" id="anatomyCaption"></p>
+
+    <h2>2 · Warning signs found</h2>
+    <ul class="checks" id="checks"></ul>
+
+    <h2>3 · How old is the real domain?</h2>
+    <div id="ageBox"><div class="loading">Looking up public registry records…</div></div>
+  </section>
+
+  <!-- Real readable text. Google and AI assistants can only read this, not anything drawn by code. -->
+  <div class="content">
+    <h2>What this link checker actually does</h2>
+    <p>Most people judge a link by how it starts. That is the mistake. A link like <code>https://paypal.com.secure-login.xyz/verify</code> begins with the word PayPal and ends with a page called verify, so it reads as legitimate at a glance. The only part of that address that decides which website you actually reach is <b>secure-login.xyz</b>. Everything to the left of it is decoration that the owner of secure-login.xyz controls completely.</p>
+    <p>This tool takes the address apart, marks the one part that matters, and then runs a fixed list of checks that phishing investigators use by hand. It answers one question: does this link contain any of the structural warning signs that appear in scam links?</p>
+
+    <h3>The checks it runs, in order</h3>
+    <ol>
+      <li><b>Real domain extraction.</b> The address is split into scheme, subdomain, registered domain, port, path and query. The registered domain — the part you would actually type to reach the site — is highlighted.</li>
+      <li><b>Hidden username check.</b> An <code>@</code> symbol before the first slash means everything to its left is a login name, not a website. <code>https://absa.co.za@evil.com</code> goes to evil.com.</li>
+      <li><b>Lookalike character check.</b> Some letters and numbers are nearly identical: capital I, lowercase l and the number 1; capital O and zero. Scammers swap them so <code>paypa1.com</code> reads as paypal.com.</li>
+      <li><b>Brand typosquatting check.</b> The domain is compared against 40 well-known brand names. A match at one or two characters of difference, or a brand name sitting inside a longer domain, is flagged.</li>
+      <li><b>Subdomain abuse check.</b> A brand name appearing in the subdomain rather than the domain means the address is trying to borrow trust it does not own.</li>
+      <li><b>IP address check.</b> Real companies almost never send links to a raw numeric IP address such as <code>185.220.101.44</code>. It hides the owner completely.</li>
+      <li><b>Unusual port check.</b> Anything other than the standard 80 and 443 ports is rare on consumer websites and common on temporary scam infrastructure.</li>
+      <li><b>Unencrypted connection check.</b> <code>http://</code> rather than <code>https://</code> on a login or payment page means the traffic can be read in transit.</li>
+      <li><b>URL shortener check.</b> Shortened links hide the destination on purpose. The tool tells you to expand it and check the result.</li>
+      <li><b>Domain age lookup.</b> The registered domain is sent to the public RDAP registry directory and the response gives the registration date, the expiry date, the registrar and whether DNSSEC is enabled.</li>
+    </ol>
+
+    <h2>Why domain age is the strongest free signal</h2>
+    <p>When somebody registers a web address, the registry records the date. That record is public and free to read through a standard protocol called RDAP, which is run by the registries themselves and by the free directory at rdap.org. Nobody can quietly backdate it.</p>
+    <p>Phishing works on volume and on speed. An attacker buys a few hundred cheap domains, sends the messages, collects credentials for two or three weeks, and abandons the domains once they are blocklisted. That is why a registration date inside the last 30 days is such a strong warning sign, and why it pairs badly with a second sign: a domain registered recently that also expires within twelve months was bought for one short campaign rather than for a business.</p>
+    <table>
+      <tr><th>Domain age</th><th>What it usually means</th></tr>
+      <tr><td>Older than 5 years</td><td>Normal for an established company. Not proof of honesty, but not a warning sign.</td></tr>
+      <tr><td>1 to 5 years</td><td>Common for small businesses and newer services. Judge it together with the other checks.</td></tr>
+      <tr><td>30 days to 1 year</td><td>New. Legitimate startups sit here too, so look for a brand name being copied before assuming the worst.</td></tr>
+      <tr><td>Under 30 days</td><td>High risk. Most blocklisted phishing domains are this new.</td></tr>
+      <tr><td>Already expired</td><td>The address is up for grabs. Anyone can buy it, including somebody who will rebuild the old site as a trap.</td></tr>
+    </table>
+    <p>Some country registries, including several African and Asian extensions, do not publish RDAP records at all. When that happens the tool says the record is unavailable instead of guessing, because a missing record is not the same thing as a safe one.</p>
+
+    <h2>How to read a URL, in one paragraph</h2>
+    <p>Read a web address from the first single slash backwards, not forwards. In <code>https://login.absa.co.za.verify-secure.info/alert</code> the first single slash comes after <code>verify-secure.info</code>, so that is the website you will reach. <code>login.absa.co.za</code> is a subdomain label that the owner of verify-secure.info invented, and <code>/alert</code> is a page on their server. The rule is short: <b>the real domain is the last group of words before the first slash.</b> Everything before it is a costume.</p>
+
+    <h2>What this tool cannot tell you</h2>
+    <div class="disclaimer">
+      <b>Read this.</b> A clean result here means the link contains none of the structural warning signs this tool checks for. It is not a guarantee that the destination is honest. This tool does not fetch the target website, does not scan it for malware, does not detect fake login forms, and does not query real-time blocklists of known malicious addresses. Legitimate old domains get hacked and used to host scam pages every day. Keep your browser warnings on, keep antivirus software updated, and when a message claims to be from your bank, type the bank's address yourself instead of clicking anything.
+    </div>
+
+    <h2>Questions people ask about suspicious links</h2>
+    <h3>How do I know if a link is safe before clicking it?</h3>
+    <p>Find the real domain by reading backwards from the first single slash. Then check the domain's age in the public registry. Then look for a copied brand name, a swapped character, a raw IP address, or an unencrypted connection on a page that asks for a password. If two or more of those appear together, treat the link as hostile.</p>
+
+    <h3>Does this checker upload the links I paste?</h3>
+    <p>No. The address is broken apart and checked inside your own browser using JavaScript on this page. The only network request is a lookup of the registered domain name against the public RDAP directory to obtain its registration and expiry dates. The path, the query string and any tokens in your link are never transmitted.</p>
+
+    <h3>Are URL shorteners dangerous?</h3>
+    <p>Not by themselves, but they hide the destination, which is what an attacker wants. Expand a shortened link before trusting it. Several shortening services reveal the target when you append a plus sign to the address.</p>
+
+    <h3>What is punycode and why does the tool mention it?</h3>
+    <p>Domain names may only use basic letters, numbers and hyphens. To allow other alphabets, the system converts them into a coded form that starts with the letters <code>xn--</code>. That coding also makes it possible to build an address that looks like a familiar brand while being a completely different domain, so any address containing <code>xn--</code> deserves a second look.</p>
+
+    <h3>Should I check links from WhatsApp and SMS?</h3>
+    <p>Those are the two channels where link scams are most common, because both let a stranger reach you with a message that looks like it came from somebody you know. Delivery notifications, bank alerts, parcel tracking messages, job offers and prize notifications arriving through WhatsApp or SMS are the categories to check every time.</p>
+  </div>
+</main>
+
+<!-- AD SLOT 2 — paste your second ad unit here (step 7) -->
+<div class="wrap"><div class="ad-slot">Ad slot 2 — below the tool</div></div>
+
+<footer class="wrap">
+  LinkWary · free link safety checker · no account, no download, no uploaded links<br>
+  Domain records from the public RDAP directory (rdap.org). Not affiliated with any brand named on this page.<br>
+  <a href="privacy.html">Privacy</a> · <a href="about.html">About</a>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- brand list used for the typosquatting check ---------- */
+  var BRANDS = [
+    "google","youtube","facebook","instagram","whatsapp","amazon","apple","microsoft","netflix",
+    "paypal","visa","mastercard","spotify","tiktok","twitter","linkedin","netflix","steam",
+    "playstation","xbox","nintendo","discord","telegram","snapchat","pinterest","reddit",
+    "absa","standardbank","nedbank","fnb","capitec","investec","tyme bank","africanbank",
+    "takealot","superbalist","woolworths","checkers","picknpay","shoprite","makro","vodacom",
+    "mtn","cellc","telkom","rain","eskom","sars","homeaffairs","dhl","fedex","postnet",
+    "ubereats","uber","bolt","airbnb","booking","gumtree","olx","binance","coinbase","luno",
+    "valr","paypal","shopify","ebay","aliexpress","temu","shein","github","cloudflare"
+  ];
+
+  /* multi-part public suffixes we care about, longest first */
+  var SUFFIXES = [
+    "co.za","org.za","web.za","net.za","ac.za","gov.za","school.za","law.za","mil.za","nom.za",
+    "co.uk","org.uk","ac.uk","gov.uk","me.uk","net.uk",
+    "com.au","net.au","org.au","edu.au","gov.au","id.au",
+    "co.nz","net.nz","org.nz","govt.nz","ac.nz",
+    "co.in","net.in","org.in","gov.in","ac.in","firm.in","gen.in","ind.in",
+    "com.br","net.br","org.br","gov.br",
+    "co.ke","or.ke","ne.ke","go.ke","ac.ke",
+    "com.ng","org.ng","gov.ng","net.ng",
+    "co.zw","org.zw","ac.zw","gov.zw",
+    "com.mx","org.mx","gob.mx","net.mx",
+    "com.tr","org.tr","net.tr","gov.tr",
+    "com.cn","net.cn","org.cn","gov.cn",
+    "co.jp","ne.jp","or.jp","ac.jp","go.jp",
+    "com.sg","net.sg","org.sg","gov.sg","edu.sg",
+    "com.hk","org.hk","net.hk","gov.hk","edu.hk",
+    "com.ar","net.ar","org.ar","gob.ar",
+    "com.my","net.my","org.my","gov.my","edu.my",
+    "com.ph","net.ph","org.ph","gov.ph",
+    "com.ua","org.ua","net.ua","gov.ua",
+    "co.il","org.il","net.il","gov.il","ac.il",
+    "com.sa","net.sa","org.sa","gov.sa",
+    "co.ae","net.ae","org.ae","gov.ae","ac.ae",
+    "com.eg","org.eg","net.eg","gov.eg",
+    "com.pk","net.pk","org.pk","gov.pk",
+    "com.bd","net.bd","org.bd","gov.bd",
+    "com.vn","net.vn","org.vn","gov.vn",
+    "com.tw","net.tw","org.tw","gov.tw",
+    "com.pl","net.pl","org.pl","gov.pl",
+    "com.ru","net.ru","org.ru","gov.ru",
+    "co.kr","or.kr","ne.kr","go.kr","ac.kr",
+    "com.es","org.es","nom.es","gob.es","edu.es",
+    "com.pt","org.pt","net.pt","gov.pt",
+    "com.gr","net.gr","org.gr","gov.gr",
+    "com.it","org.it","net.it","gov.it",
+    "com.de","org.de","net.de",
+    "com.fr","asso.fr","nom.fr","gouv.fr",
+    "com.nl","org.nl","net.nl","gov.nl",
+    "com.se","org.se","net.se",
+    "com.no","org.no","net.no",
+    "com.fi","org.fi","net.fi",
+    "com.dk","org.dk","net.dk",
+    "com.ch","org.ch","net.ch","gov.ch",
+    "com.be","org.be","net.be",
+    "com.at","or.at","co.at","gv.at","ac.at",
+    "com.ie","org.ie","net.ie","gov.ie",
+    "com.eu","org.eu"
+  ];
+
+  /* lookalike substitutions used both ways */
+  var CONFUSABLES = {
+    "1":"l","!":"i","|":"l","0":"o","5":"s","$":"s","3":"e","7":"t","2":"z","4":"a",
+    "@":"a","vv":"w","rn":"m","cl":"d","ı":"i","ì":"i","í":"i","î":"i","ï":"i",
+    "ó":"o","ò":"o","ô":"o","ö":"o","á":"a","à":"a","â":"a","ä":"a","é":"e","è":"e",
+    "ê":"e","ë":"e","ú":"u","ù":"u","û":"u","ü":"u","ç":"c","ñ":"n","ý":"y"
+  };
+
+  var SHORTENERS = ["bit.ly","tinyurl.com","goo.gl","t.co","ow.ly","is.gd","buff.ly","rebrand.ly",
+    "cutt.ly","shorturl.at","rb.gy","bit.do","soo.gd","lnkd.in","wa.me","tiny.cc","s.id","qr.ae"];
+
+  /* ---------- helpers ---------- */
+  function el(id){ return document.getElementById(id); }
+
+  function normalise(str){
+    var out = "", i, ch;
+    str = String(str).toLowerCase();
+    for(i=0;i<str.length;i++){
+      ch = str.charAt(i);
+      if(CONFUSABLES[ch] !== undefined && /[a-z0-9]/.test(ch) === false){ out += CONFUSABLES[ch]; }
+      else if(ch === "-"){ out += ""; }
+      else { out += ch; }
+    }
+    return out.replace(/[^a-z0-9]/g,"");
+  }
+
+  function levenshtein(a,b){
+    if(a === b) return 0;
+    var m=a.length, n=b.length, i, j, prev, cur, cost;
+    if(!m) return n; if(!n) return m;
+    prev = new Array(n+1);
+    for(j=0;j<=n;j++) prev[j]=j;
+    for(i=1;i<=m;i++){
+      cur=[i];
+      for(j=1;j<=n;j++){
+        cost = a.charAt(i-1)===b.charAt(j-1) ? 0 : 1;
+        cur[j]=Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost);
+      }
+      prev=cur;
+    }
+    return prev[n];
+  }
+
+  /* returns {domain, suffix} or null */
+  function registeredDomain(host){
+    var parts = host.toLowerCase().split(".").filter(Boolean);
+    if(parts.length < 2) return {domain: host.toLowerCase(), suffix:""};
+    var i, cand;
+    for(i=0;i<SUFFIXES.length;i++){
+      cand = SUFFIXES[i].split(".");
+      if(parts.length >= cand.length+1){
+        var tail = parts.slice(parts.length-cand.length).join(".");
+        if(tail === SUFFIXES[i]){
+          return {domain: parts.slice(parts.length-cand.length-1).join("."), suffix:SUFFIXES[i]};
+        }
+      }
+    }
+    return {domain: parts.slice(-2).join("."), suffix: parts.slice(-1)[0]};
+  }
+
+  function subdomainOf(host, regDomain){
+    var h = host.toLowerCase();
+    if(h === regDomain) return "";
+    if(h.slice(-regDomain.length-1) === "."+regDomain) return h.slice(0, h.length-regDomain.length-1);
+    return "";
+  }
+
+  function isIP(host){
+    if(/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
+    if(host.indexOf(":") !== -1 && /^[0-9a-f:\.\[\]]+$/i.test(host)) return true;
+    return false;
+  }
+
+  function daysBetween(a,b){ return Math.floor((b-a)/86400000); }
+
+  function fmtDate(iso){
+    var d = new Date(iso);
+    if(isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+  }
+
+  function humanAge(days){
+    if(days < 0) return "expired";
+    if(days < 31) return days + (days===1?" day":" days") + " old";
+    if(days < 365) return Math.floor(days/30.44) + " months old";
+    var y = days/365.25;
+    return (y < 10 ? y.toFixed(1) : Math.round(y)) + " years old";
+  }
+
+  /* ---------- the actual check ---------- */
+  function analyse(raw){
+    var findings = [];   /* {level:'g'|'y'|'r', title, detail} */
+    var out = {ok:false, findings:findings};
+
+    if(!raw || !raw.trim()){ findings.push({level:"y",title:"Nothing to check",detail:"Paste a link into the box above."}); return out; }
+
+    var text = raw.trim();
+    if(!/^[a-zA-Z][a-zA-Z0-9+.\-]*:\/\//.test(text)) text = "https://" + text;
+
+    var u;
+    try { u = new URL(text); }
+    catch(e){
+      findings.push({level:"r",title:"This is not a readable web address",detail:"The browser could not parse it at all. That alone is a reason not to click it. Raw text: <code>"+escapeHtml(raw.slice(0,120))+"</code>"});
+      out.ok=true; return out;
+    }
+
+    var scheme = u.protocol.replace(":","");
+    var host = (u.hostname||"").replace(/^\[|\]$/g,"").toLowerCase();
+    var port = u.port || "";
+    var path = u.pathname || "/";
+    var search = u.search || "";
+    var userinfo = "";
+
+    /* hidden username: URL() strips it into u.username */
+    if(u.username || u.password){
+      userinfo = u.username + (u.password ? ":***" : "");
+      findings.push({level:"r",title:"Hidden username in the address",
+        detail:"Everything before an <code>@code</code> symbol is a login name, not a website. This link logs in as <code>"+escapeHtml(userinfo)+"</code> and then goes to the real domain shown below."});
+    }
+
+    if(!host){
+      findings.push({level:"r",title:"No domain found in this address",detail:"There is nothing to check."});
+      out.ok=true; return out;
+    }
+
+    /* IP literal */
+    if(isIP(host)){
+      findings.push({level:"r",title:"This link goes to a raw numeric address",
+        detail:"It points at <code>"+escapeHtml(host)+"</code> instead of a name. Legitimate banks, shops and services almost never do this, because a number reveals nothing about who owns it and cannot be blocklisted by name."});
+      out.regDomain = host; out.host = host; out.isIP = true;
+      out.parsed = {scheme:scheme, sub:"", reg:host, port:port, path:path, search:search, userinfo:userinfo, host:host};
+      out.ok=true; return out;
+    }
+
+    var rd = registeredDomain(host);
+    var regDomain = rd.domain;
+    var sub = subdomainOf(host, regDomain);
+    var sld = regDomain.split(".")[0];
+    var nsld = normalise(sld);
+
+    out.regDomain = regDomain; out.host = host; out.isIP = false;
+    out.parsed = {scheme:scheme, sub:sub, reg:regDomain, port:port, path:path, search:search, userinfo:userinfo, host:host};
+
+    /* unencrypted */
+    if(scheme !== "https"){
+      findings.push({level: (path.length>1||search) ? "y":"y",
+        title:"This link is not encrypted",
+        detail:"It uses <code>"+escapeHtml(scheme)+"://</code> instead of <code>https://</code>. Anything typed on that page, including a password, can be read by other people on the same network."});
+    }
+
+    /* unusual port */
+    if(port && port !== "80" && port !== "443"){
+      findings.push({level:"y",title:"Unusual port number",
+        detail:"The address specifies port <code>"+escapeHtml(port)+"</code>. Ordinary consumer websites use 443 for encrypted and 80 for unencrypted traffic. A non-standard port usually means temporary or hand-built infrastructure."});
+    }
+
+    /* punycode */
+    if(/(^|\.)xn--/.test(host)){
+      findings.push({level:"r",title:"Coded international domain (punycode)",
+        detail:"The address contains <code>xn--</code>, which is how browsers encode non-Latin characters in a domain. This encoding is the standard trick for building an address that looks like a known brand but is a different website entirely."});
+    }
+
+    /* lookalike characters in the domain */
+    var lookalikeHits = [];
+    var pairs = [["1","l"],["0","o"],["5","s"],["rn","m"],["vv","w"],["cl","d"]];
+    var i;
+    for(i=0;i<pairs.length;i++){
+      if(sld.indexOf(pairs[i][0]) !== -1 && nsld.indexOf(pairs[i][1]) !== -1) lookalikeHits.push(pairs[i][0]+" looks like "+pairs[i][1]);
+    }
+    var brandHit = matchBrand(nsld, sld, regDomain);
+    if(lookalikeHits.length && brandHit){
+      findings.push({level:"r",title:"Character substitution that copies a brand name",
+        detail:"<code>"+escapeHtml(sld)+"</code> becomes <code>"+escapeHtml(nsld)+"</code> when lookalike characters are swapped back — that is <b>"+escapeHtml(brandHit.brand)+"</b>. "+escapeHtml(lookalikeHits.join("; "))+"."});
+    } else if(lookalikeHits.length){
+      findings.push({level:"y",title:"Lookalike characters in the domain",
+        detail:"<code>"+escapeHtml(sld)+"</code> contains characters that imitate others ("+escapeHtml(lookalikeHits.join("; "))+"). Check that it spells what you expect."});
+    }
+
+    /* brand typosquatting */
+    if(brandHit && brandHit.how === "distance"){
+      findings.push({level:"r",title:"Almost exactly a well-known brand name",
+        detail:"<code>"+escapeHtml(sld)+"</code> is "+brandHit.dist+" character"+(brandHit.dist===1?"":"s")+" away from <b>"+escapeHtml(brandHit.brand)+"</b>. The genuine site is <code>"+escapeHtml(brandHit.brand)+"."+escapeHtml(guessTLD(brandHit.brand))+"</code>, which is not this address."});
+    }
+
+    /* brand in subdomain = borrowed trust */
+    if(sub){
+      var nsub = normalise(sub);
+      var subBrand = null, k;
+      for(k=0;k<BRANDS.length;k++){
+        if(BRANDS[k].length >= 4 && nsub.indexOf(normalise(BRANDS[k])) !== -1){ subBrand = BRANDS[k]; break; }
+      }
+      if(subBrand && normalise(regDomain).indexOf(normalise(subBrand)) === -1){
+        findings.push({level:"r",title:"A brand name is being borrowed by the subdomain",
+          detail:"The words <code>"+escapeHtml(sub)+"</code> sit to the left of the real domain. Whoever owns <code>"+escapeHtml(regDomain)+"</code> invented that label — it has no connection to <b>"+escapeHtml(subBrand)+"</b>. You are going to "+escapeHtml(regDomain)+", not to "+escapeHtml(subBrand)+"."});
+      } else if(sub.split(".").length >= 3){
+        findings.push({level:"y",title:"Deeply stacked subdomains",
+          detail:"There are "+sub.split(".").length+" levels of subdomain here (<code>"+escapeHtml(sub)+"</code>). Real services rarely need that many, and long stacks are used to make an address too tedious to read carefully."});
+      }
+    }
+
+    /* brand word inside a longer domain */
+    if(brandHit && brandHit.how === "contains" && nsld.length > brandHit.brand.length + 2){
+      findings.push({level:"y",title:"A brand name buried inside a longer domain",
+        detail:"<code>"+escapeHtml(sld)+"</code> contains the word <b>"+escapeHtml(brandHit.brand)+"</b> plus extra characters. Adding words around a brand name is a common way to look official while registering something that was still available."});
+    }
+
+    /* hyphens */
+    var hyphens = (sld.match(/-/g)||[]).length;
+    if(hyphens >= 2){
+      findings.push({level:"y",title:"Multiple hyphens in the domain",
+        detail:"<code>"+escapeHtml(sld)+"</code> uses "+hyphens+" hyphens. Established companies almost never register hyphenated names; scammers do, because the unhyphenated version is already taken."});
+    }
+
+    /* shortener */
+    var si;
+    for(si=0;si<SHORTENERS.length;si++){
+      if(host === SHORTENERS[si] || host.slice(-SHORTENERS[si].length-1) === "."+SHORTENERS[si]){
+        findings.push({level:"y",title:"This is a shortened link",
+          detail:"The destination is hidden on purpose by <code>"+escapeHtml(host)+"</code>. Expand it first, then paste the expanded address back in here. Nothing about the real target can be judged until you see it."});
+        break;
+      }
+    }
+
+    /* suspicious words */
+    var SUS = ["verify","verification","secure","security","login","signin","account","billing","update","confirm","suspend","wallet","recovery","authenticate","kyc","invoice","payment","parcel","delivery","customs"];
+    var susHit = [];
+    for(i=0;i<SUS.length;i++){ if(nsld.indexOf(SUS[i])!==-1) susHit.push(SUS[i]); if(normalise(sub).indexOf(SUS[i])!==-1 && susHit.indexOf(SUS[i])===-1) susHit.push(SUS[i]); }
+    if(susHit.length && !brandHit){
+      findings.push({level:"y",title:"Urgency wording in the address",
+        detail:"The address contains "+susHit.map(function(s){return "<code>"+escapeHtml(s)+"</code>";}).join(", ")+". Real services put these words on the page, not in the domain name."});
+    }
+
+    /* free / throwaway TLD */
+    var tld = regDomain.split(".").slice(1).join(".");
+    var CHEAP = ["xyz","top","club","icu","online","site","website","shop","store","live","life","world","space","fun","click","link","buzz","rest","cyou","monster","pw","tk","ml","ga","cf","gq"];
+    if(CHEAP.indexOf(tld) !== -1){
+      findings.push({level:"y",title:"A cheap bulk-registration extension",
+        detail:"The address ends in <code>."+escapeHtml(tld)+"</code>. These extensions cost almost nothing to register in bulk and are heavily used for short-lived scam pages. It is not proof of anything on its own."});
+    }
+
+    /* long path with tokens */
+    if(search.length > 60 || /[?&](token|key|id|code|auth|session)=/i.test(search)){
+      findings.push({level:"g",title:"The link carries a personal token",
+        detail:"There is identifying data attached after the <code>?</code>. That is normal for order-tracking and one-time login links, but it means you should not share this exact link publicly — anybody who has it may have access to your session."});
+    }
+
+    if(!findings.length){
+      findings.push({level:"g",title:"No structural warning signs found",
+        detail:"The address is encrypted, points at a normal domain name, does not copy a brand name and contains no hidden username, odd port or lookalike characters. Domain age is checked separately below."});
+    }
+
+    out.ok = true;
+    return out;
+  }
+
+  function guessTLD(brand){
+    var map = {"absa":"co.za","fnb":"co.za","nedbank":"co.za","standardbank":"co.za","capitec":"co.za",
+      "takealot":"co.za","vodacom":"co.za","mtn":"co.za","cellc":"co.za","telkom":"co.za","eskom":"co.za",
+      "sars":"gov.za","woolworths":"co.za","checkers":"co.za","shoprite":"co.za","makro":"co.za",
+      "superbalist":"co.za","luno":"com","valr":"com","postnet":"co.za","dhl":"com","fedex":"com"};
+    if(map[brand]) return map[brand];
+    return "com";
+  }
+
+  function matchBrand(nsld, sld, regDomain){
+    var i, b, nb, d;
+    for(i=0;i<BRANDS.length;i++){
+      b = BRANDS[i]; nb = normalise(b);
+      if(!nb || nb.length < 4) continue;
+      if(nb === nsld) continue;              /* it IS the brand — fine */
+      if(nsld === nb) continue;
+      d = levenshtein(nsld, nb);
+      if(d > 0 && d <= 2 && Math.abs(nsld.length-nb.length) <= 2 && nb.length >= 5){
+        return {brand:b, how:"distance", dist:d};
+      }
+    }
+    for(i=0;i<BRANDS.length;i++){
+      b = BRANDS[i]; nb = normalise(b);
+      if(nb.length < 5) continue;
+      if(nsld.indexOf(nb) !== -1 && nsld !== nb){ return {brand:b, how:"contains"}; }
+    }
+    return null;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  /* ---------- rendering ---------- */
+  function renderAnatomy(p, host){
+    var box = el("anatomy"), cap = el("anatomyCaption");
+    var h = "";
+    h += '<span class="p">'+escapeHtml(p.scheme)+':\/\/</span>';
+    if(p.userinfo) h += '<span class="sus">'+escapeHtml(p.userinfo)+'@</span>';
+    if(p.sub) h += '<span class="p">'+escapeHtml(p.sub)+'.</span>';
+    h += '<span class="real">'+escapeHtml(p.reg)+'</span>';
+    if(p.port) h += '<span class="sus">:'+escapeHtml(p.port)+'</span>';
+    h += '<span class="p">'+escapeHtml(p.path==="/"?"/":p.path)+escapeHtml(p.search)+'</span>';
+    box.innerHTML = h;
+
+    if(p.sub){
+      cap.innerHTML = 'The highlighted part is the only part that decides where you go: <b>'+escapeHtml(p.reg)+'</b>. Everything to the left of it, including <code>'+escapeHtml(p.sub)+'</code>, is a label invented by whoever owns '+escapeHtml(p.reg)+'.';
+    } else {
+      cap.innerHTML = 'The highlighted part is the whole website: <b>'+escapeHtml(p.reg)+'</b>. Read a web address backwards from the first single slash and you will always find it.';
+    }
+  }
+
+  function renderChecks(list){
+    var ul = el("checks"), i, li, html="";
+    for(i=0;i<list.length;i++){
+      html += '<li><span class="dot '+list[i].level+'"></span><span class="ct">'
+            + '<span class="t">'+list[i].title+'</span>'
+            + (list[i].detail ? '<span class="d">'+list[i].detail+'</span>' : '')
+            + '</span></li>';
+    }
+    ul.innerHTML = html;
+  }
+
+  function worst(list){
+    var i, w="safe";
+    for(i=0;i<list.length;i++){
+      if(list[i].level==="r") return "bad";
+      if(list[i].level==="y") w="warn";
+    }
+    return w;
+  }
+
+  function setVerdict(state, why){
+    var box = el("verdictBox");
+    box.className = "verdict " + state;
+    el("verdictText").textContent = state==="safe" ? "Looks safe" : state==="warn" ? "Be careful" : "Danger signs";
+    el("verdictWhy").innerHTML = why || "";
+  }
+
+  function renderAge(data, regDomain){
+    var box = el("ageBox"), now = new Date(), html="", reg=null, exp=null, registrar="Unknown", dnssec=null, i;
+
+    if(data && data.events){
+      for(i=0;i<data.events.length;i++){
+        if(data.events[i].eventAction==="registration") reg = new Date(data.events[i].eventDate);
+        if(data.events[i].eventAction==="expiration") exp = new Date(data.events[i].eventDate);
+      }
+    }
+    if(data && data.entities){
+      for(i=0;i<data.entities.length;i++){
+        if((data.entities[i].roles||[]).indexOf("registrar")!==-1){
+          var va = data.entities[i].vcardArray;
+          if(va && va[1]){
+            var j; for(j=0;j<va[1].length;j++){ if(va[1][j][0]==="fn") registrar = va[1][j][3]; }
+          }
+        }
+      }
+    }
+    if(data && data.secureDNS) dnssec = !!data.secureDNS.delegationSigned;
+
+    if(!reg){
+      box.innerHTML = '<div class="statgrid"><div class="stat"><div class="k">Registry record</div><div class="v">Not published</div></div></div>'
+        + '<p class="caption">The registry that runs <code>'+escapeHtml(regDomain)+'</code> does not publish free RDAP records, so the registration date cannot be looked up from a browser. Several country extensions work this way — most <code>.co.za</code>, <code>.ng</code> and <code>.ke</code> addresses among them. <b>A missing record is not a safe record.</b> Judge this link on the warning signs above, and if it claims to be a local bank or shop, type that company\'s address into your browser yourself instead of clicking.</p>';
+      return "unknown";
+    }
+
+    var ageDays = daysBetween(reg, now);
+    var level, colour, widthPct;
+    if(ageDays < 0){ level="expired"; colour="var(--bad)"; widthPct=100; }
+    else if(ageDays < 30){ level="new"; colour="var(--bad)"; widthPct=Math.max(4,(ageDays/3650)*100); }
+    else if(ageDays < 365){ level="young"; colour="var(--warn)"; widthPct=Math.max(6,(ageDays/3650)*100); }
+    else { level="old"; colour="var(--safe)"; widthPct=Math.min(100,(ageDays/3650)*100); }
+
+    var expDays = exp ? daysBetween(now, exp) : null;
+    var lifetimeDays = exp ? daysBetween(reg, exp) : null;
+
+    html += '<div class="statgrid">';
+    html += '<div class="stat"><div class="k">Registered</div><div class="v">'+escapeHtml(fmtDate(reg.toISOString()))+'</div></div>';
+    html += '<div class="stat"><div class="k">Age</div><div class="v">'+escapeHtml(humanAge(ageDays))+'</div></div>';
+    html += '<div class="stat"><div class="k">Expires</div><div class="v">'+(exp?escapeHtml(fmtDate(exp.toISOString())):"Unknown")+'</div></div>';
+    html += '<div class="stat"><div class="k">Registrar</div><div class="v">'+escapeHtml(registrar||"Unknown")+'</div></div>';
+    html += '<div class="stat"><div class="k">DNSSEC</div><div class="v">'+(dnssec===null?"Unknown":(dnssec?"Enabled":"Not enabled"))+'</div></div>';
+    html += '</div>';
+    html += '<div class="agebar"><i style="width:'+widthPct.toFixed(1)+'%;background:'+colour+'"></i></div>';
+    html += '<p class="caption" style="font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--dimmer)">NEW &#8592; domain age, 10 year scale &#8594; ESTABLISHED</p>';
+
+    var msg;
+    if(level==="expired"){
+      msg = '<b>This domain has already expired.</b> It can be bought by anyone, including somebody who will rebuild the old page as a trap. Do not enter anything here.';
+      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "bad";
+    }
+    if(level==="new"){
+      msg = '<b>Registered '+humanAge(ageDays)+'.</b> Most blocklisted phishing domains are less than a month old, because attackers buy them cheap, use them for a few weeks, and abandon them.';
+      if(expDays !== null && lifetimeDays !== null && lifetimeDays <= 400) msg += ' It also expires in '+expDays+' days, which fits a one-off campaign rather than a business.';
+      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "bad";
+    }
+    if(level==="young"){
+      msg = 'Registered '+humanAge(ageDays)+'. New, but not brand new. Legitimate startups sit in this range too, so weigh it against the warning signs above.';
+      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "warn";
+    }
+    msg = 'Registered '+humanAge(ageDays)+'. Established domains are the normal case for real companies. This is not proof of honesty — old domains get hacked too — but it is not a warning sign.';
+    if(expDays !== null && expDays < 45) msg += ' Note that it expires in '+expDays+' days and could change hands.';
+    html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "safe";
+  }
+
+  /* ---------- events ---------- */
+  var inflight = false;
+
+  function run(raw){
+    var res = analyse(raw);
+    el("result").classList.add("on");
+    if(!res.ok){ renderChecks(res.findings); setVerdict("warn",""); el("ageBox").innerHTML=""; return; }
+
+    renderAnatomy(res.parsed, res.host);
+    renderChecks(res.findings);
+
+    var base = worst(res.findings);
+    if(res.isIP){ setVerdict("bad","This link points at a bare numeric address with no domain name at all. Treat it as hostile unless you were expecting it."); return; }
+
+    setVerdict(base==="bad"?"bad":base, "");
+    el("ageBox").innerHTML = '<div class="loading">Looking up the public registry record for '+escapeHtml(res.regDomain)+'…</div>';
+
+    if(inflight) return;
+    inflight = true;
+
+    fetch("https://rdap.org/domain/"+encodeURIComponent(res.regDomain), {headers:{"Accept":"application/rdap+json"}})
+      .then(function(r){
+        if(r.status === 404) return null;
+        if(!r.ok) throw new Error("registry "+r.status);
+        return r.json();
+      })
+      .then(function(data){
+        var ageState = renderAge(data, res.regDomain);
+        var finalState = base;
+        if(ageState === "bad") finalState = "bad";
+        else if(ageState === "warn" && finalState === "safe") finalState = "warn";
+
+        var reds = res.findings.filter(function(f){return f.level==="r";}).length;
+        var yels = res.findings.filter(function(f){return f.level==="y";}).length;
+        var why;
+        if(finalState === "bad"){
+          why = reds
+            ? "Found "+reds+" serious warning sign"+(reds===1?"":"s")+" in the address itself"+(ageState==="bad"?", and the domain is either brand new or already expired":"")+"."
+            : "The address looks ordinary, but the registry record says the domain is "+(ageState==="bad"?"brand new or expired":"not what it should be")+". That combination is what most phishing links look like.";
+        } else if(finalState === "warn"){
+          why = yels+" thing"+(yels===1?"":"s")+" worth a second look. No serious sign, but do not enter a password here unless you were expecting this message.";
+        } else {
+          why = "No structural warning signs, and the domain has an established public registration record. Still not a guarantee — see what this tool cannot tell you below.";
+        }
+        setVerdict(finalState, why);
+        inflight = false;
+      })
+      .catch(function(){
+        el("ageBox").innerHTML = '<div class="statgrid"><div class="stat"><div class="k">Registry record</div><div class="v">Lookup failed</div></div></div>'
+          + '<p class="caption">The public registry directory could not be reached from your browser right now. This can happen on some networks and ad blockers. The warning-sign checks above still ran and are still valid.</p>';
+        inflight = false;
+      });
+  }
+
+  el("f").addEventListener("submit", function(e){
+    e.preventDefault();
+    run(el("u").value);
+    var r = el("result");
+    if(r.scrollIntoView) r.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  var ex = document.querySelectorAll("[data-ex]"), i;
+  for(i=0;i<ex.length;i++){
+    ex[i].addEventListener("click", function(){
+      el("u").value = this.getAttribute("data-ex");
+      run(this.getAttribute("data-ex"));
+      el("result").scrollIntoView({behavior:"smooth", block:"start"});
+    });
+  }
+
+  /* allow ?check=... so the tool works from a shared link */
+  try{
+    var q = new URLSearchParams(location.search).get("check");
+    if(q){ el("u").value = q; run(q); }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

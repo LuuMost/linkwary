@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About LinkWary — what it is, what it is not</title>
+<meta name="description" content="LinkWary is a free one-page link safety checker. Here is how it works, where its data comes from, and what it cannot tell you.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://YOUR-DOMAIN-HERE/about.html">
+<style>
+  :root{--bg:#0b0f14;--panel:#121821;--line:#212c3a;--text:#e8eef5;--dim:#93a4b8;--dimmer:#657789;
+    --warn:#f5b544;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);line-height:1.65;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:44px 18px 70px}
+  a{color:#5aa9ff}
+  h1{font-size:32px;letter-spacing:-.02em;margin:0 0 6px}
+  .brand{font-family:var(--mono);font-size:12px;color:var(--dimmer);letter-spacing:.22em;text-transform:uppercase}
+  h2{font-size:19px;margin:32px 0 8px}
+  p,li,td{color:var(--dim);font-size:15.5px}
+  ol,ul{padding-left:22px}
+  li{margin:7px 0}
+  code{font-family:var(--mono);font-size:13.5px;color:#bcdcff;background:var(--panel);padding:1px 5px;border-radius:4px}
+  table{width:100%;border-collapse:collapse;margin:14px 0}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--text);font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+  .box{margin:24px 0;padding:16px 18px;border:1px solid rgba(245,181,68,.35);background:rgba(245,181,68,.06);border-radius:12px}
+  .box b{color:var(--warn)}
+  .back{display:inline-block;margin-top:34px;font-size:14px}
+  hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">LinkWary</div>
+  <h1>About this tool</h1>
+  <p><b>LinkWary is a free one-page link safety checker for anyone who received a suspicious link by email, SMS or WhatsApp. It breaks the address into its parts, shows you the real domain, looks up how long ago that domain was registered and when it expires, and lists the phishing red flags it finds.</b></p>
+  <p>It exists because the single most common way people get deceived online is not a hacked account or a clever piece of malware. It is a link that looks right.</p>
+
+  <h2>The problem it solves</h2>
+  <p>People judge a web address by how it starts, and scammers know it. An address such as <code>https://paypal.com.secure-login.xyz/verify</code> starts with PayPal and ends with a page called verify, so at a glance it reads as genuine. The part of that address that decides where you actually go is <code>secure-login.xyz</code>. Everything to its left is a label invented by whoever owns that domain.</p>
+  <p>Reading a URL correctly takes about ten seconds of concentration that nobody has when a message arrives claiming their parcel is stuck at customs or their account is about to be suspended. This tool does the reading for you.</p>
+
+  <h2>How it works</h2>
+  <ol>
+    <li>You paste an address. Your browser splits it into scheme, username, subdomain, registered domain, port, path and query string, and marks the one part that matters.</li>
+    <li>A fixed list of structural checks runs on your own device: hidden usernames, lookalike characters, brand names being copied, brand names borrowed by a subdomain, raw IP addresses, non-standard ports, unencrypted connections, shortened links, hyphen stacking, urgency wording and bulk-registration extensions.</li>
+    <li>Your browser then asks the public RDAP registry directory for the registered domain. The reply gives the registration date, the expiry date, the registrar and whether DNSSEC is enabled. Domain age is the strongest free signal available, because phishing domains are overwhelmingly registered days before they are used.</li>
+    <li>You get a verdict of <b>Looks safe</b>, <b>Be careful</b> or <b>Danger signs</b>, with the reason for it written out in plain words.</li>
+  </ol>
+
+  <h2>Where the data comes from</h2>
+  <table>
+    <tr><th>Fact shown</th><th>Source</th></tr>
+    <tr><td>Registration date, expiry date, registrar, DNSSEC</td><td>The public RDAP protocol, via the free directory at rdap.org, which redirects to the registry responsible for that extension. RDAP replaced WHOIS and is published by the registries themselves.</td></tr>
+    <tr><td>Brand names used in the typosquatting check</td><td>A built-in list of roughly 70 well-known consumer brands, banks, retailers and mobile operators, including South African ones. The list is stored in the page and nothing is looked up remotely.</td></tr>
+    <tr><td>Public suffixes such as co.za and co.uk</td><td>A built-in list of the multi-part extensions needed to work out which part of a hostname is the registered domain.</td></tr>
+    <tr><td>Shortened-link services</td><td>A built-in list of common shorteners.</td></tr>
+  </table>
+
+  <div class="box">
+    <b>What this tool cannot tell you.</b> It does not connect to the website you are checking. It does not scan the destination for malware. It cannot recognise a fake login form. It does not query real-time blocklists of known malicious addresses. A domain that is fifteen years old can still be compromised and used to serve a scam page. A clean result here means "no structural warning signs", not "this is safe". Keep browser warnings enabled, keep antivirus software updated, and when a message claims to be from your bank, type the bank's address yourself.
+  </div>
+
+  <h2>Privacy</h2>
+  <p>The link you paste is never sent to this website. Every check runs in your own browser. The only network request is a lookup of the registered domain name against the public registry directory. See the <a href="privacy.html">privacy policy</a> for the full detail, including how advertising on this site is handled.</p>
+
+  <h2>Some registries publish nothing</h2>
+  <p>Not every country extension operates a free RDAP service. When the registry for a domain has none, this tool reports that the record is unavailable rather than guessing, because a missing record is not the same thing as a safe one.</p>
+
+  <h2>Who runs it</h2>
+  <p>PUT A SHORT HONEST SENTENCE ABOUT YOURSELF HERE, plus a working contact email address. Advertising networks check this page before approving a site, and a real human being behind it is part of what they are looking for.</p>
+
+  <h2>Not affiliated</h2>
+  <p>Brand names appearing in the results and in the built-in comparison list are used only to identify addresses that imitate them. This site is independent and is not affiliated with, endorsed by or connected to any company named on it.</p>
+
+  <hr>
+  <a class="back" href="index.html">&larr; Check a link</a>
+</div>
+</body>
+</html>
