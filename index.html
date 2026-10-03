@@ -752,6 +752,26 @@
     }
     if(data && data.secureDNS) dnssec = !!data.secureDNS.delegationSigned;
 
+    /* Registry status codes. Most are housekeeping ("client transfer prohibited" is just a
+       registrar lock and means nothing bad). A few are only ever imposed when a domain is
+       being pulled out of service, usually after abuse reports. Those are decisive. */
+    var statuses = [], suspBad = false, suspWarn = false;
+    if(data && data.status && data.status.length){
+      var DEADLY = ["serverhold","clienthold","pendingdelete","redemptionperiod","pendingdeleterestored"];
+      for(i=0;i<data.status.length;i++){
+        var raw = String(data.status[i]);
+        statuses.push(raw);
+        var norm = raw.toLowerCase().replace(/[^a-z]/g,"");
+        if(DEADLY.indexOf(norm)!==-1) suspBad = true;
+        if(norm==="inactive") suspWarn = true;
+      }
+    }
+    function worse(base){
+      if(suspBad) return "bad";
+      if(suspWarn && base==="safe") return "warn";
+      return base;
+    }
+
     if(!reg){
       box.innerHTML = '<div class="statgrid"><div class="stat"><div class="k">Registry record</div><div class="v">Not published</div></div></div>'
         + '<p class="caption">The registry that runs <code>'+escapeHtml(regDomain)+'</code> does not publish free RDAP records, so the registration date cannot be looked up from a browser. Several country extensions work this way — most <code>.co.za</code>, <code>.ng</code> and <code>.ke</code> addresses among them. <b>A missing record is not a safe record.</b> Judge this link on the warning signs above, and if it claims to be a local bank or shop, type that company\'s address into your browser yourself instead of clicking.</p>';
@@ -774,27 +794,41 @@
     html += '<div class="stat"><div class="k">Expires</div><div class="v">'+(exp?escapeHtml(fmtDate(exp.toISOString())):"Unknown")+'</div></div>';
     html += '<div class="stat"><div class="k">Registrar</div><div class="v">'+escapeHtml(registrar||"Unknown")+'</div></div>';
     html += '<div class="stat"><div class="k">DNSSEC</div><div class="v">'+(dnssec===null?"Unknown":(dnssec?"Enabled":"Not enabled"))+'</div></div>';
+    if(statuses.length){
+      var pretty = statuses.map(function(x){
+        var w = x.replace(/([a-z])([A-Z])/g,"$1 $2").toLowerCase();
+        return w.charAt(0).toUpperCase()+w.slice(1);
+      }).join(" \u00b7 ");
+      html += '<div class="stat" style="grid-column:1/-1"><div class="k">Registry status</div><div class="v" style="color:'+(suspBad?"var(--bad)":suspWarn?"var(--warn)":"inherit")+'">'+escapeHtml(pretty)+'</div></div>';
+    }
     html += '</div>';
     html += '<div class="agebar"><i style="width:'+widthPct.toFixed(1)+'%;background:'+colour+'"></i></div>';
     html += '<p class="caption" style="font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--dimmer)">NEW &#8592; domain age, 10 year scale &#8594; ESTABLISHED</p>';
 
+    if(suspBad){
+      html += '<p class="caption" style="border-left:3px solid var(--bad);padding-left:11px;color:#ffc2c2"><b>This domain has been suspended.</b> Its registry status is <b>'+escapeHtml(statuses.join(", "))+'.</b> Registries and registrars only put a domain into those states to take it out of service &mdash; in practice, after reports of abuse or non-payment, and it is on its way to being deleted. An honest, working business does not sit in this state. Treat this address as hostile, whatever else it looks like.</p>';
+    }
+    if(suspWarn && !suspBad){
+      html += '<p class="caption" style="border-left:3px solid var(--warn);padding-left:11px">The registry lists this domain as <b>'+escapeHtml(statuses.join(", "))+'</b>, meaning it currently has no working nameservers. Sometimes that is a freshly bought domain waiting to be set up &mdash; and sometimes it is a dead one about to be re-registered by somebody else.</p>';
+    }
+
     var msg;
     if(level==="expired"){
       msg = '<b>This domain has already expired.</b> It can be bought by anyone, including somebody who will rebuild the old page as a trap. Do not enter anything here.';
-      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "bad";
+      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return worse("bad");
     }
     if(level==="new"){
       msg = '<b>Registered '+humanAge(ageDays)+'.</b> Most blocklisted phishing domains are less than a month old, because attackers buy them cheap, use them for a few weeks, and abandon them.';
       if(expDays !== null && lifetimeDays !== null && lifetimeDays <= 400) msg += ' It also expires in '+expDays+' days, which fits a one-off campaign rather than a business.';
-      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "bad";
+      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return worse("bad");
     }
     if(level==="young"){
       msg = 'Registered '+humanAge(ageDays)+'. New, but not brand new. Legitimate startups sit in this range too, so weigh it against the warning signs above.';
-      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "warn";
+      html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return worse("warn");
     }
     msg = 'Registered '+humanAge(ageDays)+'. Established domains are the normal case for real companies. This is not proof of honesty — old domains get hacked too — but it is not a warning sign.';
     if(expDays !== null && expDays < 45) msg += ' Note that it expires in '+expDays+' days and could change hands.';
-    html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return "safe";
+    html += '<p class="caption">'+msg+'</p>'; box.innerHTML=html; return worse("safe");
   }
 
   /* ---------- events ---------- */
